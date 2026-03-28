@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Переезд в Лиссабон · Семья Станчевых</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: Georgia, serif; background: #f7f7f5; color: #1a1a1a; max-width: 100vw; overflow-x: hidden; }
+button { font-family: Georgia, serif; cursor: pointer; border: none; }
+input, textarea, select { font-family: Georgia, serif; }
+
+.header { background: #1a1a2e; padding: 20px 16px 14px; color: #fff; }
+.header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.header h1 { font-size: 20px; font-weight: 700; margin: 2px 0; letter-spacing: -0.5px; }
+.header-sub { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #475569; margin-bottom: 3px; }
+.header-date { font-size: 10px; color: #475569; }
+.sync-status { text-align: right; font-size: 9px; }
+.progress-bar-bg { background: #1e3a5f; border-radius: 4px; height: 5px; margin-top: 12px; }
+.progress-bar-fill { background: linear-gradient(90deg,#3b82f6,#8b5cf6); height: 100%; border-radius: 4px; transition: width 0.4s; }
+.progress-label { display: flex; justify-content: space-between; font-size: 10px; color: #64748b; margin-bottom: 4px; }
+
+.legend { background: #fff; border-bottom: 1px solid #f0f0f0; padding: 6px 16px; overflow-x: auto; white-space: nowrap; }
+.legend-item { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 8px; margin-right: 6px; }
+
+.tabs { background: #fff; border-bottom: 1px solid #e5e7eb; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; }
+.tab { display: inline-block; padding: 10px 12px; font-size: 12px; background: none; border: none; border-bottom: 3px solid transparent; color: #6b7280; cursor: pointer; white-space: nowrap; }
+.tab.active { font-weight: 700; }
+.tab-badge { display: inline-block; font-size: 10px; background: #f3f4f6; color: #6b7280; border-radius: 10px; padding: 1px 5px; margin-left: 4px; }
+.tab-badge.done { background: #dcfce7; color: #166534; }
+
+.content { padding: 16px 14px 100px; }
+.phase-label { display: inline-block; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #fff; padding: 2px 8px; border-radius: 3px; margin-bottom: 5px; }
+.phase-title { font-size: 20px; font-weight: 700; margin-bottom: 14px; }
+.week-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #9ca3af; margin-bottom: 8px; padding-left: 2px; }
+.week { margin-bottom: 24px; }
+.tasks { display: flex; flex-direction: column; gap: 8px; }
+
+.task-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px 13px; transition: all 0.2s; }
+.task-card.done { opacity: 0.55; background: #f8fafc; border-color: #e2e8f0; }
+.task-card.skipped { opacity: 0.65; background: #fafafa; border-color: #efefef; }
+.task-row { display: flex; align-items: flex-start; gap: 10px; }
+.checkbox { width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0; margin-top: 1px; border: 2px solid #d1d5db; background: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; }
+.checkbox.checked { border: none; }
+.checkbox svg { display: none; }
+.checkbox.checked svg { display: block; }
+.task-body { flex: 1; min-width: 0; }
+.task-title { font-size: 14px; font-weight: 500; line-height: 1.4; color: #111827; }
+.task-title.done { text-decoration: line-through; color: #9ca3af; }
+.task-meta { display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap; align-items: center; }
+.strat-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; }
+.task-date { font-size: 10px; color: #9ca3af; }
+.task-links { display: flex; gap: 10px; margin-top: 6px; }
+.task-link { background: none; border: none; padding: 0; font-size: 12px; color: #6b7280; cursor: pointer; }
+.task-more { background: none; border: none; padding: 2px 6px; font-size: 18px; color: #cbd5e1; flex-shrink: 0; line-height: 1; margin-top: -2px; }
+.task-note { margin-top: 8px; padding: 9px 11px; background: #f8fafc; border-radius: 8px; font-size: 13px; color: #374151; line-height: 1.6; border-left-width: 3px; border-left-style: solid; }
+.strat-note { margin-top: 8px; padding: 9px 11px; border-radius: 8px; font-size: 13px; line-height: 1.5; font-weight: 500; }
+.add-task-btn { background: none; border: 1px dashed #d1d5db; border-radius: 12px; padding: 12px 14px; width: 100%; font-size: 13px; color: #9ca3af; text-align: left; }
+
+/* Modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: flex-end; justify-content: center; }
+.modal-sheet { background: #fff; border-radius: 16px 16px 0 0; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; padding: 20px 16px 32px; }
+.modal-handle { width: 40px; height: 4px; background: #e5e7eb; border-radius: 2px; margin: 0 auto 16px; }
+.modal-title { font-size: 12px; font-weight: 700; color: #374151; margin-bottom: 12px; letter-spacing: 0.5px; }
+.modal-input { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; font-family: Georgia, serif; margin-bottom: 8px; }
+.modal-textarea { width: 100%; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; font-family: Georgia, serif; resize: none; height: 80px; margin-bottom: 12px; }
+.modal-select { flex: 1; padding: 9px 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; font-family: Georgia, serif; background: #fff; }
+.modal-label { font-size: 11px; color: #6b7280; margin-bottom: 6px; font-weight: 600; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.chip { padding: 5px 10px; border-radius: 20px; border: none; font-size: 11px; cursor: pointer; }
+.btn-primary { width: 100%; padding: 13px; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-family: Georgia, serif; font-weight: 700; margin-bottom: 8px; }
+.btn-cancel { width: 100%; padding: 12px; background: none; color: #9ca3af; border: none; font-size: 14px; font-family: Georgia, serif; }
+.btn-delete { padding: 12px 16px; background: #fee2e2; color: #b91c1c; border: none; border-radius: 8px; font-size: 14px; font-family: Georgia, serif; }
+.btn-move { width: 100%; padding: 10px; background: #7c3aed; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+.btn-row { display: flex; gap: 8px; }
+
+.footer { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #e5e7eb; padding: 8px 16px 12px; text-align: center; font-size: 9px; color: #d1d5db; letter-spacing: 1px; }
+
+.loading { display: flex; align-items: center; justify-content: center; height: 100vh; text-align: center; color: #6b7280; }
+.loading-icon { font-size: 40px; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="loading">
+    <div>
+      <div class="loading-icon">✈️</div>
+      <div style="font-size:16px">Загрузка плана...</div>
+      <div style="font-size:12px;color:#9ca3af;margin-top:6px">Подключение к Supabase</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://hcpxbizweittckqugefx.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjcHhiaXp3ZWl0dGNrcXVnZWZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MTY4OTAsImV4cCI6MjA5MDI5Mjg5MH0.9qILrB50oyfWW6MgNODwdGedGeexozyc4c_mKqklwHA";
+
+const STRATEGY = {
+  required: { label: "Обязательно", color: "#b91c1c", bg: "#fee2e2", icon: "!" },
+  optimize: { label: "Оптимизировано", color: "#0369a1", bg: "#e0f2fe", icon: "⚡" },
+  delegate: { label: "Делегировать", color: "#7c3aed", bg: "#ede9fe", icon: "→" },
+  later:    { label: "Отложить",      color: "#92400e", bg: "#fef3c7", icon: "⏱" },
+  skip:     { label: "Пропустить",    color: "#6b7280", bg: "#f3f4f6", icon: "⊘" },
+};
+const PRIORITY = {
+  high:   { bg: "#fee2e2", text: "#b91c1c", label: "Важно" },
+  medium: { bg: "#fef3c7", text: "#92400e", label: "Средне" },
+  low:    { bg: "#f3f4f6", text: "#6b7280", label: "Позже" },
+};
+
+function genId() { return "t-" + Math.random().toString(36).substr(2,9); }
+
+const DEFAULT_PHASES = [
+  { id:"march", label:"Март 2026", sublabel:"В процессе", color:"#dc2626", weeks:[
+    { id:"w-mar-1", week:"Март — сейчас", tasks:[
+      { id:"car-repair", text:"Ремонт машины (страховая одобрила)", note:"Страховая подтвердила. Сдать в сервис — забрать до переезда.", priority:"high", date:"Март 2026", strategy:"required", strategyNote:"Уже одобрено — просто сделать." },
+      { id:"wohnung-notice", text:"Написать Kündigung арендодателю", note:"3 месяца уведомления. Для съезда в июне — нужно до 31 марта.", priority:"high", date:"До 31 марта", strategy:"required", strategyNote:"Нельзя пропустить — иначе платишь лишний месяц аренды." },
+      { id:"lease-check", text:"Проверить Mercedes: дата + Ablösebetrag", note:"Позвонить в Mercedes Financial Services Augsburg. Сравнить с mobile.de.", priority:"high", date:"Март 2026", strategy:"optimize", strategyNote:"Один звонок — сразу ясно выкупать или дождаться конца." },
+    ]},
+  ]},
+  { id:"april", label:"Апрель 2026", sublabel:"Запуск", color:"#2563eb", weeks:[
+    { id:"w-apr-1", week:"Неделя 1–2", tasks:[
+      { id:"school-enquiry", text:"Enquiry в ULIS + виртуальный тур", note:"admissions@unitedlisbon.school. Open Day 22 апреля онлайн.", priority:"high", date:"1–7 апреля", strategy:"required", strategyNote:"Места разбирают быстро." },
+      { id:"movers-confirm", text:"Подтвердить дату с транспортной компанией", note:"Ориентир: конец мая / начало июня.", priority:"medium", date:"Апрель", strategy:"required", strategyNote:"" },
+      { id:"sell-stuff", text:"Продажа вещей: eBay Kleinanzeigen, Facebook", note:"Мебель, техника — всё что не везёшь.", priority:"medium", date:"Апрель–май", strategy:"required", strategyNote:"Чем раньше — тем лучше цены." },
+    ]},
+    { id:"w-apr-2", week:"Неделя 3–4", tasks:[
+      { id:"ulis-apply", text:"Подать Application в ULIS (€270)", note:"Табели Эммы за 2 года + перевод на английский.", priority:"high", date:"Конец апреля", strategy:"required", strategyNote:"Места в Grade 4 ограничены." },
+      { id:"emma-translations", text:"Перевести документы Эммы на английский", note:"Zeugnisse за 2 года. Онлайн: €50–80.", priority:"medium", date:"Апрель", strategy:"delegate", strategyNote:"Делегируй переводчику." },
+    ]},
+  ]},
+  { id:"may", label:"Май 2026", sublabel:"Подготовка", color:"#7c3aed", weeks:[
+    { id:"w-may-1", week:"Начало мая", tasks:[
+      { id:"portugal-insurance", text:"Оформить страховку в Португалии", note:"Médis, Fidelidade, Multicare — ~€60–100/мес.", priority:"high", date:"Начало мая", strategy:"optimize", strategyNote:"Оформить онлайн за 30 минут." },
+      { id:"aok-cancel", text:"Отписаться от AOK", note:"Abmeldung + доказательство португальской страховки.", priority:"high", date:"Начало мая", strategy:"required", strategyNote:"" },
+      { id:"bank-notify", text:"Уведомить немецкий банк о переезде", note:"ING, DKB — уточни заранее чтобы не заморозили счёт.", priority:"medium", date:"Май", strategy:"optimize", strategyNote:"Один звонок — 5 минут." },
+      { id:"docs-folder", text:"Собрать папку документов", note:"Паспорта, свидетельства, документы Эммы, медкарты. Скан в Google Drive.", priority:"high", date:"Май", strategy:"required", strategyNote:"Один раз — не теряешь." },
+    ]},
+    { id:"w-may-2", week:"Середина–конец мая", tasks:[
+      { id:"storage-lisbon", text:"Забронировать склад в Лиссабоне", note:"EasyBox, GuardaBox — €50–80/мес. Parque das Nações.", priority:"high", date:"Середина мая", strategy:"required", strategyNote:"Без склада некуда везти вещи пока не найдена квартира." },
+      { id:"temp-apartment", text:"Арендовать временную квартиру в Лиссабоне", note:"Uniplaces, Flatio. 1–2 мес. €1500–2500/мес. Parque das Nações.", priority:"high", date:"Середина мая", strategy:"required", strategyNote:"Нужна для NIF с португальским адресом." },
+      { id:"pack-sort", text:"Разобрать и упаковать вещи", note:"Три категории: везём / продаём / выбрасываем.", priority:"medium", date:"Конец мая", strategy:"required", strategyNote:"" },
+      { id:"abmeldung-prep", text:"Подготовить Abmeldung", note:"Делается в день переезда или за неделю до.", priority:"medium", date:"Конец мая", strategy:"later", strategyNote:"Не нужно раньше." },
+    ]},
+  ]},
+  { id:"june", label:"Июнь 2026", sublabel:"Переезд", color:"#059669", weeks:[
+    { id:"w-jun-1", week:"День переезда", tasks:[
+      { id:"movers-day", text:"Вывоз вещей → склад в Лиссабоне", note:"Вещи на склад. Семья летит с документами.", priority:"high", date:"Начало июня", strategy:"required", strategyNote:"" },
+      { id:"abmeldung-do", text:"Сделать Abmeldung в Германии", note:"В день переезда. Сохранить Abmeldebescheinigung.", priority:"high", date:"День переезда", strategy:"required", strategyNote:"" },
+      { id:"mercedes-decision", text:"Решить вопрос с Mercedes", note:"1) Сдать. 2) Auslandsgenehmigung + ехать. 3) Выкупить и продать.", priority:"high", date:"Июнь", strategy:"optimize", strategyNote:"Решить после звонка в Mercedes." },
+    ]},
+    { id:"w-jun-2", week:"Первая неделя в Лиссабоне", tasks:[
+      { id:"sim-card", text:"Купить португальскую SIM-карту", note:"NOS, MEO или Vodafone. Нужен паспорт.", priority:"high", date:"День 1", strategy:"required", strategyNote:"" },
+      { id:"nif-portugal", text:"✅ Оформить NIF в Finanças", note:"Паспорт + договор аренды → Lisboa 7 или Lisboa 10. Без записи с утра. 1 шаг вместо 3.", priority:"high", date:"Первая неделя", strategy:"optimize", strategyNote:"Делаем в Португалии — не нужен fiscal rep, не нужна замена адреса." },
+      { id:"bank-portugal", text:"Открыть счёт в португальском банке", note:"Novobanco, Millennium BCP. NIF + паспорт + адрес.", priority:"high", date:"Первая неделя", strategy:"optimize", strategyNote:"Начни с Wise до открытия счёта." },
+      { id:"find-apartment", text:"Искать постоянную квартиру (100–180м²)", note:"Idealista.pt. Parque das Nações / Oriente. €2500–3800/мес.", priority:"high", date:"Июнь", strategy:"delegate", strategyNote:"Найди агента — делегируй поиск." },
+    ]},
+  ]},
+  { id:"july", label:"Июль–Август 2026", sublabel:"Обживаемся", color:"#d97706", weeks:[
+    { id:"w-jul-1", week:"Июль", tasks:[
+      { id:"perm-apartment", text:"Подписать постоянный договор аренды", note:"Зарегистрировать в Finanças. Переезд вещей со склада.", priority:"high", date:"Июль", strategy:"required", strategyNote:"" },
+      { id:"utilities", text:"Подключить коммуналку", note:"EDP, Galp, NOS/MEO/Vodafone. Всё требует NIF.", priority:"medium", date:"Июль", strategy:"required", strategyNote:"" },
+      { id:"residency", text:"Подать на Certificado de Registo (резидент ЕС)", note:"AIMA. Паспорт, NIF, договор аренды, подтверждение дохода.", priority:"high", date:"Июль", strategy:"required", strategyNote:"" },
+      { id:"nhr-apply", text:"⚠️ Подать на IFICI/NHR", note:"Критично в первый год — льгота теряется навсегда. 20% вместо 35%+ на 10 лет.", priority:"high", date:"Июль — срочно", strategy:"delegate", strategyNote:"Делегируй налоговому юристу (~€200–400). Окупается за первый месяц." },
+      { id:"emma-school-docs", text:"Передать документы в ULIS", note:"Enrollment fee €2100. Начало учёбы сентябрь 2026.", priority:"high", date:"Июль", strategy:"required", strategyNote:"" },
+    ]},
+    { id:"w-aug-1", week:"Август", tasks:[
+      { id:"emma-supply", text:"Школьные принадлежности для Эммы", note:"ULIS пришлёт список. Форма для физкультуры обязательна.", priority:"medium", date:"Август", strategy:"later", strategyNote:"Делается ближе к школе." },
+      { id:"emma-english", text:"Английский для Эммы перед школой", note:"2–3 онлайн-занятия в неделю снизят стресс в первый день.", priority:"medium", date:"Июль–август", strategy:"optimize", strategyNote:"Минимум усилий — максимум уверенности." },
+      { id:"explore", text:"Найти любимые места в районе", note:"LENA Specialty Coffee, Time Out Market, набережная.", priority:"low", date:"Август", strategy:"skip", strategyNote:"Произойдёт само — просто гулять." },
+    ]},
+  ]},
+];
+
+// State
+let phases = DEFAULT_PHASES;
+let checked = {};
+let activePhase = "march";
+let expandedNote = null;
+let expandedStrat = null;
+let modal = null; // {type: 'edit'|'add', ...}
+let dbStatus = "synced";
+let lastHash = null;
+let saving = false;
+
+// DB
+async function dbLoad() {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/plan_data?id=eq.main&select=phases,checked,updated_at`, {
+    headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
+  });
+  const rows = await res.json();
+  return rows && rows.length > 0 ? rows[0] : null;
+}
+
+async function dbSave(p, c) {
+  if (saving) return;
+  saving = true;
+  dbStatus = "saving"; render();
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/plan_data`, {
+      method: "POST",
+      headers: { "Content-Type":"application/json", apikey: SUPABASE_KEY, Authorization:`Bearer ${SUPABASE_KEY}`, Prefer:"resolution=merge-duplicates" },
+      body: JSON.stringify({ id:"main", phases:p, checked:c })
+    });
+    dbStatus = "synced";
+  } catch(e) { dbStatus = "error"; }
+  saving = false;
+  render();
+}
+
+async function poll() {
+  try {
+    const row = await dbLoad();
+    if (!row) return;
+    const h = JSON.stringify(row);
+    if (h !== lastHash) {
+      lastHash = h;
+      if (row.phases) phases = row.phases;
+      if (row.checked) checked = row.checked;
+      dbStatus = "synced";
+      render();
+    }
+  } catch(e) {}
+}
+
+function applyAndSave(newPhases, newChecked) {
+  phases = newPhases;
+  checked = newChecked || checked;
+  lastHash = JSON.stringify({phases, checked});
+  render();
+  dbSave(phases, checked);
+}
+
+// Actions
+function toggle(id) {
+  const nc = {...checked, [id]: !checked[id]};
+  applyAndSave(phases, nc);
+}
+
+function updateTask(phaseId, weekId, taskId, updates) {
+  const np = phases.map(p => p.id!==phaseId?p:{...p,weeks:p.weeks.map(w=>w.id!==weekId?w:{...w,tasks:w.tasks.map(t=>t.id!==taskId?t:{...t,...updates})})});
+  applyAndSave(np);
+  modal = null; render();
+}
+
+function deleteTask(phaseId, weekId, taskId) {
+  const np = phases.map(p => p.id!==phaseId?p:{...p,weeks:p.weeks.map(w=>w.id!==weekId?w:{...w,tasks:w.tasks.filter(t=>t.id!==taskId)})});
+  applyAndSave(np);
+  modal = null; render();
+}
+
+function moveTask(fromPhaseId, fromWeekId, taskId, toPhaseId, toWeekId, updates) {
+  let moved = null;
+  let np = phases.map(p => p.id!==fromPhaseId?p:{...p,weeks:p.weeks.map(w=>w.id!==fromWeekId?w:{...w,tasks:w.tasks.filter(t=>{if(t.id!==taskId)return true;moved={...t,...updates};return false;})})});
+  if(!moved)return;
+  np = np.map(p => p.id!==toPhaseId?p:{...p,weeks:p.weeks.map(w=>w.id!==toWeekId?w:{...w,tasks:[...w.tasks,moved]})});
+  applyAndSave(np);
+  modal = null; render();
+}
+
+function addTask(phaseId, weekId, task) {
+  const np = phases.map(p => p.id!==phaseId?p:{...p,weeks:p.weeks.map(w=>w.id!==weekId?w:{...w,tasks:[...w.tasks,{id:genId(),...task}]})});
+  applyAndSave(np);
+  modal = null; render();
+}
+
+// Drag
+let dragFrom = null;
+function dragStart(phaseId, weekId, idx) { dragFrom = {phaseId,weekId,idx}; }
+function dragOver(e) { e.preventDefault(); }
+function dragDrop(phaseId, weekId, idx) {
+  if(!dragFrom||dragFrom.phaseId!==phaseId||dragFrom.weekId!==weekId||dragFrom.idx===idx)return;
+  const np = phases.map(p=>p.id!==phaseId?p:{...p,weeks:p.weeks.map(w=>{
+    if(w.id!==weekId)return w;
+    const tasks=[...w.tasks];
+    const[moved]=tasks.splice(dragFrom.idx,1);
+    tasks.splice(idx,0,moved);
+    return{...w,tasks};
+  })});
+  dragFrom=null;
+  applyAndSave(np);
+}
+
+// Render helpers
+function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+function renderStratChips(current, prefix) {
+  return Object.entries(STRATEGY).map(([key,val])=>`
+    <button class="chip" style="background:${current===key?val.bg:'#f3f4f6'};color:${current===key?val.color:'#6b7280'};font-weight:${current===key?700:400}"
+      onclick="${prefix}_setStrat('${key}')">${val.icon} ${val.label}</button>
+  `).join('');
+}
+
+function renderPriorityChips(current, prefix) {
+  return Object.entries(PRIORITY).map(([key,val])=>`
+    <button class="chip" style="flex:1;padding:7px;border-radius:8px;background:${current===key?val.bg:'#f3f4f6'};color:${current===key?val.text:'#6b7280'};font-weight:${current===key?700:400}"
+      onclick="${prefix}_setPriority('${key}')">${val.label}</button>
+  `).join('');
+}
+
+function renderModal() {
+  if (!modal) return '';
+  if (modal.type === 'edit') {
+    const ph = phases.find(p=>p.id===modal.phaseId);
+    const wk = ph?.weeks.find(w=>w.id===modal.weekId);
+    const toPhase = phases.find(p=>p.id===(modal.movePhase||modal.phaseId));
+    const showMove = modal.movePhase !== modal.phaseId || modal.moveWeek !== modal.weekId;
+    return `
+    <div class="modal-overlay" onclick="closeModal()">
+      <div class="modal-sheet" onclick="event.stopPropagation()">
+        <div class="modal-handle"></div>
+        <div class="modal-title">РЕДАКТИРОВАТЬ ЗАДАЧУ</div>
+        <input class="modal-input" id="edit-text" value="${esc(modal.text)}" placeholder="Название *">
+        <input class="modal-input" id="edit-date" value="${esc(modal.date)}" placeholder="Дата / срок">
+        <textarea class="modal-textarea" id="edit-note" placeholder="Детали">${esc(modal.note)}</textarea>
+        <div class="modal-label">СТРАТЕГИЯ</div>
+        <div class="chips">${renderStratChips(modal.strat,'edit')}</div>
+        <input class="modal-input" id="edit-stratNote" value="${esc(modal.stratNote)}" placeholder="Почему такая стратегия?">
+        <div class="modal-label" style="margin-top:4px">ПРИОРИТЕТ</div>
+        <div style="display:flex;gap:6px;margin-bottom:16px">${renderPriorityChips(modal.priority,'edit')}</div>
+        <div class="modal-label">ПЕРЕНЕСТИ В ДРУГОЙ БЛОК</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <select class="modal-select" id="edit-toPhase" onchange="editChangePhase(this.value)">
+            ${phases.map(p=>`<option value="${p.id}"${p.id===modal.movePhase?' selected':''}>${p.label}</option>`).join('')}
+          </select>
+          <select class="modal-select" id="edit-toWeek">
+            ${(toPhase?.weeks||[]).map(w=>`<option value="${w.id}"${w.id===modal.moveWeek?' selected':''}>${w.week}</option>`).join('')}
+          </select>
+        </div>
+        ${showMove?`<button class="btn-move" onclick="doMove()">→ Перенести задачу</button>`:''}
+        <div class="btn-row">
+          <button class="btn-primary" style="background:#1a1a2e;flex:1" onclick="doSave()">Сохранить</button>
+          <button class="btn-delete" onclick="doDelete()">🗑</button>
+        </div>
+        <button class="btn-cancel" onclick="closeModal()">Отмена</button>
+      </div>
+    </div>`;
+  }
+  if (modal.type === 'add') {
+    return `
+    <div class="modal-overlay" onclick="closeModal()">
+      <div class="modal-sheet" onclick="event.stopPropagation()">
+        <div class="modal-handle"></div>
+        <div class="modal-title">НОВАЯ ЗАДАЧА</div>
+        <input class="modal-input" id="add-text" placeholder="Название *" autofocus>
+        <input class="modal-input" id="add-date" placeholder="Дата / срок">
+        <textarea class="modal-textarea" id="add-note" placeholder="Детали (необязательно)"></textarea>
+        <div class="modal-label">СТРАТЕГИЯ</div>
+        <div class="chips">${renderStratChips(modal.strat,'add')}</div>
+        <div class="modal-label">ПРИОРИТЕТ</div>
+        <div style="display:flex;gap:6px;margin-bottom:16px">${renderPriorityChips(modal.priority,'add')}</div>
+        <button class="btn-primary" id="add-submit" style="background:#1a1a2e;opacity:0.4" onclick="doAdd()">Добавить задачу</button>
+        <button class="btn-cancel" onclick="closeModal()">Отмена</button>
+      </div>
+    </div>`;
+  }
+  return '';
+}
+
+function render() {
+  const total = phases.flatMap(p=>p.weeks.flatMap(w=>w.tasks)).length;
+  const done = Object.values(checked).filter(Boolean).length;
+  const pct = total ? Math.round(done/total*100) : 0;
+  const ph = phases.find(p=>p.id===activePhase);
+
+  const statusMap = {
+    loading:{color:"#94a3b8",label:"⟳ загрузка"},
+    saving:{color:"#60a5fa",label:"⟳ сохранение"},
+    synced:{color:"#22c55e",label:"● синхр."},
+    error:{color:"#f87171",label:"⚠ ошибка"},
+  };
+  const st = statusMap[dbStatus];
+
+  let html = `
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="header-sub">Семья Станчевых</div>
+        <h1>Переезд в Лиссабон</h1>
+        <div class="header-date">Март — Сентябрь 2026</div>
+      </div>
+      <div class="sync-status">
+        <div style="color:${st.color}">${st.label}</div>
+        <div style="font-size:8px;color:#334155;margin-top:1px">обновл. каждые 5с</div>
+      </div>
+    </div>
+    <div class="progress-label"><span>Прогресс</span><span style="color:#fff;font-weight:700">${done}/${total} · ${pct}%</span></div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+  </div>
+
+  <div class="legend">
+    ${Object.entries(STRATEGY).map(([k,v])=>`<span class="legend-item" style="background:${v.bg};color:${v.color}">${v.icon} ${v.label}</span>`).join('')}
+  </div>
+
+  <div class="tabs">
+    ${phases.map(p=>{
+      const all=p.weeks.flatMap(w=>w.tasks);
+      const d=all.filter(t=>checked[t.id]).length;
+      const isActive=p.id===activePhase;
+      return `<button class="tab${isActive?' active':''}" style="${isActive?`color:${p.color};border-bottom-color:${p.color}`:''}" onclick="setPhase('${p.id}')">
+        ${p.label}<span class="tab-badge${d===all.length&&all.length>0?' done':''}">${d}/${all.length}</span>
+      </button>`;
+    }).join('')}
+  </div>
+
+  <div class="content">
+    <div><span class="phase-label" style="background:${ph.color}">${ph.sublabel}</span></div>
+    <div class="phase-title">${ph.label}</div>
+    ${ph.weeks.map(week=>`
+      <div class="week">
+        <div class="week-label">${week.week}</div>
+        <div class="tasks">
+          ${week.tasks.map((task,idx)=>{
+            const isDone=checked[task.id];
+            const isSkip=task.strategy==='skip';
+            const strat=STRATEGY[task.strategy]||STRATEGY.required;
+            const noteOpen=expandedNote===task.id;
+            const stratOpen=expandedStrat===task.id;
+            return `
+            <div class="task-card${isDone?' done':''}${isSkip?' skipped':''}"
+              draggable="true"
+              ondragstart="dragStart('${ph.id}','${week.id}',${idx})"
+              ondragover="dragOver(event)"
+              ondrop="dragDrop('${ph.id}','${week.id}',${idx})">
+              <div class="task-row">
+                <div class="checkbox${isDone?' checked':''}" style="${isDone?`background:${ph.color}`:''}${isSkip?';border-color:#e5e7eb':''}"
+                  onclick="${isSkip?'':` toggle('${task.id}')`}">
+                  ${isDone?`<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`:''}
+                  ${isSkip&&!isDone?`<span style="font-size:10px;color:#d1d5db">⊘</span>`:''}
+                </div>
+                <div class="task-body">
+                  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
+                    <span class="task-title${isDone||isSkip?' done':''}">${esc(task.text)}</span>
+                    <button class="task-more" onclick="openEdit('${ph.id}','${week.id}','${task.id}')">···</button>
+                  </div>
+                  <div class="task-meta">
+                    <span class="strat-badge" style="background:${strat.bg};color:${strat.color}">${strat.icon} ${strat.label}</span>
+                    ${task.date?`<span class="task-date">📅 ${esc(task.date)}</span>`:''}
+                  </div>
+                  ${(task.note||task.strategyNote)?`<div class="task-links">
+                    ${task.note?`<button class="task-link" onclick="toggleNote('${task.id}')">${noteOpen?'▾ Скрыть':'▸ Детали'}</button>`:''}
+                    ${task.strategyNote?`<button class="task-link" style="color:${strat.color}" onclick="toggleStrat('${task.id}')">${stratOpen?'▾ Скрыть':'▸ Почему?'}</button>`:''}
+                  </div>`:''}
+                  ${noteOpen&&task.note?`<div class="task-note" style="border-left-color:${ph.color}">${esc(task.note)}</div>`:''}
+                  ${stratOpen&&task.strategyNote?`<div class="strat-note" style="background:${strat.bg};color:${strat.color}">${strat.icon} ${esc(task.strategyNote)}</div>`:''}
+                </div>
+              </div>
+            </div>`;
+          }).join('')}
+          <button class="add-task-btn" onclick="openAdd('${ph.id}','${week.id}')">+ Добавить задачу</button>
+        </div>
+      </div>
+    `).join('')}
+  </div>
+
+  <div class="footer">SERGII · ANNA · EMMA · LISBON 2026 · Supabase sync</div>
+  ${renderModal()}
+  `;
+
+  document.getElementById('app').innerHTML = html;
+
+  // After render, wire up add input listener
+  const addText = document.getElementById('add-text');
+  if (addText) {
+    addText.addEventListener('input', e => {
+      const btn = document.getElementById('add-submit');
+      if(btn) btn.style.opacity = e.target.value.trim() ? '1' : '0.4';
+    });
+    setTimeout(()=>addText.focus(),100);
+  }
+}
+
+// Modal state mutators (called from inline onclick)
+window.edit_setStrat = s => { modal.strat=s; render(); };
+window.edit_setPriority = s => { modal.priority=s; render(); };
+window.add_setStrat = s => { modal.strat=s; render(); };
+window.add_setPriority = s => { modal.priority=s; render(); };
+
+window.editChangePhase = phaseId => {
+  modal.movePhase = phaseId;
+  const ph = phases.find(p=>p.id===phaseId);
+  modal.moveWeek = ph?.weeks[0]?.id || modal.moveWeek;
+  render();
+};
+
+window.setPhase = id => { activePhase=id; render(); };
+window.toggle = id => toggle(id);
+window.toggleNote = id => { expandedNote = expandedNote===id?null:id; expandedStrat=null; render(); };
+window.toggleStrat = id => { expandedStrat = expandedStrat===id?null:id; expandedNote=null; render(); };
+window.closeModal = () => { modal=null; render(); };
+
+window.openEdit = (phaseId, weekId, taskId) => {
+  const ph = phases.find(p=>p.id===phaseId);
+  const wk = ph?.weeks.find(w=>w.id===weekId);
+  const task = wk?.tasks.find(t=>t.id===taskId);
+  if(!task) return;
+  modal = { type:'edit', phaseId, weekId, taskId, text:task.text, note:task.note||'', date:task.date||'', strat:task.strategy||'required', stratNote:task.strategyNote||'', priority:task.priority||'medium', movePhase:phaseId, moveWeek:weekId };
+  expandedNote=null; expandedStrat=null;
+  render();
+};
+
+window.openAdd = (phaseId, weekId) => {
+  modal = { type:'add', phaseId, weekId, strat:'required', priority:'medium' };
+  render();
+};
+
+window.doSave = () => {
+  const text = document.getElementById('edit-text')?.value?.trim();
+  if(!text) return;
+  const toWeekEl = document.getElementById('edit-toWeek');
+  const toWeekId = toWeekEl?.value || modal.weekId;
+  updateTask(modal.phaseId, modal.weekId, modal.taskId, {
+    text, note: document.getElementById('edit-note')?.value||'',
+    date: document.getElementById('edit-date')?.value||'',
+    strategy: modal.strat, strategyNote: document.getElementById('edit-stratNote')?.value||'',
+    priority: modal.priority
+  });
+};
+
+window.doDelete = () => { if(confirm('Удалить задачу?')) deleteTask(modal.phaseId, modal.weekId, modal.taskId); };
+
+window.doMove = () => {
+  const text = document.getElementById('edit-text')?.value?.trim()||modal.text;
+  const toWeekEl = document.getElementById('edit-toWeek');
+  const toWeekId = toWeekEl?.value || modal.moveWeek;
+  moveTask(modal.phaseId, modal.weekId, modal.taskId, modal.movePhase, toWeekId, {
+    text, note: document.getElementById('edit-note')?.value||'',
+    date: document.getElementById('edit-date')?.value||'',
+    strategy: modal.strat, strategyNote: document.getElementById('edit-stratNote')?.value||'',
+    priority: modal.priority
+  });
+};
+
+window.doAdd = () => {
+  const text = document.getElementById('add-text')?.value?.trim();
+  if(!text) return;
+  addTask(modal.phaseId, modal.weekId, {
+    text, note: document.getElementById('add-note')?.value||'',
+    date: document.getElementById('add-date')?.value||'',
+    strategy: modal.strat, strategyNote:'', priority: modal.priority
+  });
+};
+
+// Drag
+window.dragStart = dragStart;
+window.dragOver = dragOver;
+window.dragDrop = dragDrop;
+
+// Init
+async function init() {
+  try {
+    const row = await dbLoad();
+    if (row && row.phases) { phases = row.phases; checked = row.checked||{}; lastHash = JSON.stringify(row); }
+  } catch(e) {}
+  dbStatus = "synced";
+  render();
+  setInterval(poll, 5000);
+}
+
+init();
+</script>
+</body>
+</html>
