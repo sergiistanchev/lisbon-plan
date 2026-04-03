@@ -74,6 +74,25 @@ input, textarea, select { font-family: Georgia, serif; }
 .btn-move { width: 100%; padding: 10px; background: #7c3aed; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
 .btn-row { display: flex; gap: 8px; }
 
+.cal { margin-bottom: 12px; }
+.cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.cal-nav { background: none; border: none; font-size: 20px; color: #6b7280; cursor: pointer; padding: 4px 10px; line-height: 1; }
+.cal-month { font-size: 13px; font-weight: 700; color: #374151; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; text-align: center; }
+.cal-dow { font-size: 9px; color: #9ca3af; font-weight: 600; padding: 4px 0; }
+.cal-day { font-size: 12px; padding: 7px 0; border-radius: 0; cursor: pointer; border: none; background: none; color: #374151; font-family: Georgia, serif; }
+.cal-day:hover { background: #f3f4f6; }
+.cal-day.today { font-weight: 700; color: #2563eb; }
+.cal-day.sel { background: #1a1a2e; color: #fff; }
+.cal-day.sel.range-start { border-radius: 8px 0 0 8px; }
+.cal-day.sel.range-end { border-radius: 0 8px 8px 0; }
+.cal-day.sel.single { border-radius: 8px; }
+.cal-day.in-range { background: #e8eaf0; color: #1a1a2e; }
+.cal-day.empty { cursor: default; }
+.cal-day.empty:hover { background: none; }
+.cal-info { display: flex; gap: 8px; align-items: center; margin-top: 8px; font-size: 12px; color: #6b7280; }
+.cal-clear { background: none; border: none; color: #ef4444; font-size: 11px; cursor: pointer; margin-left: auto; font-family: Georgia, serif; }
+
 .footer { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #e5e7eb; padding: 8px 16px 12px; text-align: center; font-size: 9px; color: #d1d5db; letter-spacing: 1px; }
 
 .loading { display: flex; align-items: center; justify-content: center; height: 100vh; text-align: center; color: #6b7280; }
@@ -110,6 +129,60 @@ const PRIORITY = {
 };
 
 function genId() { return "t-" + Math.random().toString(36).substr(2,9); }
+
+const MONTHS_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const MONTHS_GEN = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const DAYS_SHORT = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+
+function fmtDate(from, to) {
+  if (!from) return '';
+  const d1 = new Date(from + 'T12:00:00');
+  const f = d => `${d.getDate()} ${MONTHS_GEN[d.getMonth()]} ${d.getFullYear()}`;
+  if (!to || from === to) return f(d1);
+  const d2 = new Date(to + 'T12:00:00');
+  if (d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth()) {
+    return `${d1.getDate()}–${d2.getDate()} ${MONTHS_GEN[d1.getMonth()]} ${d1.getFullYear()}`;
+  }
+  return `${f(d1)} — ${f(d2)}`;
+}
+
+function renderCalendar(prefix) {
+  const yr = modal.calYear, mo = modal.calMonth;
+  const firstDow = (new Date(yr, mo, 1).getDay() + 6) % 7;
+  const days = new Date(yr, mo + 1, 0).getDate();
+  const today = new Date().toISOString().slice(0, 10);
+  const from = modal.dateFrom, to = modal.dateTo;
+  const iso = d => `${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+
+  let cells = DAYS_SHORT.map(d => `<div class="cal-dow">${d}</div>`).join('');
+  for (let i = 0; i < firstDow; i++) cells += `<div class="cal-day empty"></div>`;
+
+  for (let d = 1; d <= days; d++) {
+    const dt = iso(d);
+    const isFrom = dt === from, isTo = dt === to;
+    const isSel = isFrom || isTo;
+    const inRange = from && to && from !== to && dt > from && dt < to;
+    const isRange = from && to && from !== to;
+    let cls = 'cal-day';
+    if (dt === today) cls += ' today';
+    if (isSel) cls += ' sel' + (isRange ? (isFrom ? ' range-start' : ' range-end') : ' single');
+    if (inRange) cls += ' in-range';
+    cells += `<button class="${cls}" onclick="${prefix}_pickDate('${dt}')">${d}</button>`;
+  }
+
+  const sel = fmtDate(from, to);
+  return `<div class="cal">
+    <div class="cal-header">
+      <button class="cal-nav" onclick="${prefix}_calNav(-1)">‹</button>
+      <span class="cal-month">${MONTHS_RU[mo]} ${yr}</span>
+      <button class="cal-nav" onclick="${prefix}_calNav(1)">›</button>
+    </div>
+    <div class="cal-grid">${cells}</div>
+    ${sel
+      ? `<div class="cal-info"><span>📅 ${sel}</span><button class="cal-clear" onclick="${prefix}_clearDate()">✕ Очистить</button></div>`
+      : `<div class="cal-info"><span style="color:#d1d5db">Выберите дату или диапазон</span></div>`}
+  </div>`;
+}
 
 const DEFAULT_PHASES = [
   { id:"march", label:"Март 2026", sublabel:"В процессе", color:"#dc2626", weeks:[
@@ -313,8 +386,9 @@ function renderModal() {
         <div class="modal-handle"></div>
         <div class="modal-title">РЕДАКТИРОВАТЬ ЗАДАЧУ</div>
         <input class="modal-input" id="edit-text" value="${esc(modal.text)}" placeholder="Название *">
-        <input class="modal-input" id="edit-date" value="${esc(modal.date)}" placeholder="Дата / срок">
         <textarea class="modal-textarea" id="edit-note" placeholder="Детали">${esc(modal.note)}</textarea>
+        <div class="modal-label">ДАТА / СРОК</div>
+        ${renderCalendar('edit')}
         <div class="modal-label">СТРАТЕГИЯ</div>
         <div class="chips">${renderStratChips(modal.strat,'edit')}</div>
         <input class="modal-input" id="edit-stratNote" value="${esc(modal.stratNote)}" placeholder="Почему такая стратегия?">
@@ -345,8 +419,9 @@ function renderModal() {
         <div class="modal-handle"></div>
         <div class="modal-title">НОВАЯ ЗАДАЧА</div>
         <input class="modal-input" id="add-text" placeholder="Название *" autofocus>
-        <input class="modal-input" id="add-date" placeholder="Дата / срок">
         <textarea class="modal-textarea" id="add-note" placeholder="Детали (необязательно)"></textarea>
+        <div class="modal-label">ДАТА / СРОК</div>
+        ${renderCalendar('add')}
         <div class="modal-label">СТРАТЕГИЯ</div>
         <div class="chips">${renderStratChips(modal.strat,'add')}</div>
         <div class="modal-label">ПРИОРИТЕТ</div>
@@ -437,7 +512,7 @@ function render() {
                   </div>
                   <div class="task-meta">
                     <span class="strat-badge" style="background:${strat.bg};color:${strat.color}">${strat.icon} ${strat.label}</span>
-                    ${task.date?`<span class="task-date">📅 ${esc(task.date)}</span>`:''}
+                    ${task.dateFrom?`<span class="task-date">📅 ${fmtDate(task.dateFrom,task.dateTo)}</span>`:task.date?`<span class="task-date">📅 ${esc(task.date)}</span>`:''}
                   </div>
                   ${(task.note||task.strategyNote)?`<div class="task-links">
                     ${task.note?`<button class="task-link" onclick="toggleNote('${task.id}')">${noteOpen?'▾ Скрыть':'▸ Детали'}</button>`:''}
@@ -478,6 +553,33 @@ window.edit_setPriority = s => { modal.priority=s; render(); };
 window.add_setStrat = s => { modal.strat=s; render(); };
 window.add_setPriority = s => { modal.priority=s; render(); };
 
+function calPickDate(iso) {
+  if (!modal.dateFrom || (modal.dateFrom && modal.dateTo)) {
+    modal.dateFrom = iso; modal.dateTo = null;
+  } else if (iso === modal.dateFrom) {
+    modal.dateTo = iso;
+  } else if (iso < modal.dateFrom) {
+    modal.dateTo = modal.dateFrom; modal.dateFrom = iso;
+  } else {
+    modal.dateTo = iso;
+  }
+  render();
+}
+function calNav(dir) {
+  modal.calMonth += dir;
+  if (modal.calMonth > 11) { modal.calMonth = 0; modal.calYear++; }
+  if (modal.calMonth < 0) { modal.calMonth = 11; modal.calYear--; }
+  render();
+}
+function calClear() { modal.dateFrom = null; modal.dateTo = null; render(); }
+
+window.edit_pickDate = calPickDate;
+window.edit_calNav = calNav;
+window.edit_clearDate = calClear;
+window.add_pickDate = calPickDate;
+window.add_calNav = calNav;
+window.add_clearDate = calClear;
+
 window.editChangePhase = phaseId => {
   modal.movePhase = phaseId;
   const ph = phases.find(p=>p.id===phaseId);
@@ -499,13 +601,25 @@ window.openEdit = (phaseId, weekId, taskId) => {
   const wk = ph?.weeks.find(w=>w.id===weekId);
   const task = wk?.tasks.find(t=>t.id===taskId);
   if(!task) return;
-  modal = { type:'edit', phaseId, weekId, taskId, text:task.text, note:task.note||'', date:task.date||'', strat:task.strategy||'required', stratNote:task.strategyNote||'', priority:task.priority||'medium', movePhase:phaseId, moveWeek:weekId };
+  const now = new Date();
+  const df = task.dateFrom || null;
+  const dt = task.dateTo || null;
+  modal = {
+    type:'edit', phaseId, weekId, taskId, text:task.text, note:task.note||'',
+    dateFrom:df, dateTo:dt,
+    calMonth: df ? new Date(df+'T12:00:00').getMonth() : now.getMonth(),
+    calYear: df ? new Date(df+'T12:00:00').getFullYear() : now.getFullYear(),
+    strat:task.strategy||'required', stratNote:task.strategyNote||'',
+    priority:task.priority||'medium', movePhase:phaseId, moveWeek:weekId
+  };
   expandedNote=null; expandedStrat=null;
   render();
 };
 
 window.openAdd = (phaseId, weekId) => {
-  modal = { type:'add', phaseId, weekId, strat:'required', priority:'medium' };
+  const now = new Date();
+  modal = { type:'add', phaseId, weekId, strat:'required', priority:'medium',
+    dateFrom:null, dateTo:null, calMonth:now.getMonth(), calYear:now.getFullYear() };
   render();
 };
 
@@ -516,7 +630,8 @@ window.doSave = () => {
   const toWeekId = toWeekEl?.value || modal.weekId;
   updateTask(modal.phaseId, modal.weekId, modal.taskId, {
     text, note: document.getElementById('edit-note')?.value||'',
-    date: document.getElementById('edit-date')?.value||'',
+    dateFrom: modal.dateFrom||null, dateTo: modal.dateTo||null,
+    date: fmtDate(modal.dateFrom, modal.dateTo),
     strategy: modal.strat, strategyNote: document.getElementById('edit-stratNote')?.value||'',
     priority: modal.priority
   });
@@ -541,7 +656,8 @@ window.doAdd = () => {
   if(!text) return;
   addTask(modal.phaseId, modal.weekId, {
     text, note: document.getElementById('add-note')?.value||'',
-    date: document.getElementById('add-date')?.value||'',
+    dateFrom: modal.dateFrom||null, dateTo: modal.dateTo||null,
+    date: fmtDate(modal.dateFrom, modal.dateTo),
     strategy: modal.strat, strategyNote:'', priority: modal.priority
   });
 };
