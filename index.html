@@ -210,10 +210,11 @@ async function dbSave(p, c) {
 }
 
 async function poll() {
+  if (saving) return;
   try {
     const row = await dbLoad();
     if (!row) return;
-    const h = JSON.stringify(row);
+    const h = JSON.stringify({phases: row.phases, checked: row.checked});
     if (h !== lastHash) {
       lastHash = h;
       if (row.phases) phases = row.phases;
@@ -425,7 +426,7 @@ function render() {
               ondrop="dragDrop('${ph.id}','${week.id}',${idx})">
               <div class="task-row">
                 <div class="checkbox${isDone?' checked':''}" style="${isDone?`background:${ph.color}`:''}${isSkip?';border-color:#e5e7eb':''}"
-                  onclick="${isSkip?'':` toggle('${task.id}')`}">
+                  ${isSkip?'':`data-toggle="${task.id}"`}>
                   ${isDone?`<svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`:''}
                   ${isSkip&&!isDone?`<span style="font-size:10px;color:#d1d5db">⊘</span>`:''}
                 </div>
@@ -485,7 +486,10 @@ window.editChangePhase = phaseId => {
 };
 
 window.setPhase = id => { activePhase=id; render(); };
-window.toggle = id => toggle(id);
+document.getElementById('app').addEventListener('click', e => {
+  const el = e.target.closest('[data-toggle]');
+  if (el) toggle(el.dataset.toggle);
+});
 window.toggleNote = id => { expandedNote = expandedNote===id?null:id; expandedStrat=null; render(); };
 window.toggleStrat = id => { expandedStrat = expandedStrat===id?null:id; expandedNote=null; render(); };
 window.closeModal = () => { modal=null; render(); };
@@ -551,7 +555,7 @@ window.dragDrop = dragDrop;
 async function init() {
   try {
     const row = await dbLoad();
-    if (row && row.phases) { phases = row.phases; checked = row.checked||{}; lastHash = JSON.stringify(row); }
+    if (row && row.phases) { phases = row.phases; checked = row.checked||{}; lastHash = JSON.stringify({phases, checked}); }
   } catch(e) {}
   dbStatus = "synced";
   render();
