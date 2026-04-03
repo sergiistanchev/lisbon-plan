@@ -213,7 +213,7 @@ async function poll() {
   try {
     const row = await dbLoad();
     if (!row) return;
-    const h = JSON.stringify(row);
+    const h = JSON.stringify({phases: row.phases, checked: row.checked});
     if (h !== lastHash) {
       lastHash = h;
       if (row.phases) phases = row.phases;
