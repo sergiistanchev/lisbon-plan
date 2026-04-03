@@ -210,6 +210,7 @@ async function dbSave(p, c) {
 }
 
 async function poll() {
+  if (saving) return;
   try {
     const row = await dbLoad();
     if (!row) return;
@@ -551,7 +552,7 @@ window.dragDrop = dragDrop;
 async function init() {
   try {
     const row = await dbLoad();
-    if (row && row.phases) { phases = row.phases; checked = row.checked||{}; lastHash = JSON.stringify(row); }
+    if (row && row.phases) { phases = row.phases; checked = row.checked||{}; lastHash = JSON.stringify({phases, checked}); }
   } catch(e) {}
   dbStatus = "synced";
   render();
